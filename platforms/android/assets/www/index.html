@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        <link rel="stylesheet" type="text/css" href="css/jquery.mobile-1.4.5.css" />
+        <script type="text/javascript" src="js/jquery-2.1.1.js"></script>
+        <script type="text/javascript" src="js/jquery.mobile-1.4.5.js"></script>
+        <title>ToDoL</title>
+        <script type="text/javascript">
+        var todol={};
+        todol.db=null;
+document.addEventListener('deviceready',function(){
+        //Function to Open Database Connection
+
+        todol.open=function(){
+            todol.db=window.openDatabase("ToDo",1.0,"ToDo",5242880);
+        }
+
+        todol.createTable=function(){
+            var dbn=todol.db;
+            dbn.transaction(function(tx){
+                tx.executeSql("CREATE TABLE IF NOT EXISTS todotable(id INTEGER PRIMARY KEY ASC,todo TEXT,addedon DATETIME)",[]);
+            });
+        }
+
+        todol.addToDo=function(todoText){
+            var dbn=todol.db;
+            dbn.transaction(function(tx){
+                var added_on=new Date();
+                tx.executeSql("INSERT INTO todotable(todo,addedon) values(?,?)",[todoText,added_on],
+                    todol.onSuccess,todol.onErrors);
+            });
+        }
+
+        todol.onErrors=function(tx,e){
+            alert("There has been an Error:"+e.message);
+        }
+
+        todol.onSuccess=function(tx,r){
+            todol.getAllToDoItems(loadTodoItems);
+        }
+
+        todol.getAllToDoItems=function(renderFunc){
+            var dbn=todol.db;
+            db.transaction(function(tx){
+                tx.executeSql("select * from todotable",[],renderFunc,todol.onErrors);
+            });
+        }
+
+        todol.deleteToDo=function(id){
+            var dbn=todol.db;
+            dbn.transaction(function(tx){
+                tx.executeSql("DELETE FROM todotable WHERE id=?",[id],todol.onSuccess,todol.onErrors);
+            });
+        }
+
+        function loadTodoItems(tx,rs){
+            var rowOutput="";
+            var todoItems=$("#todolist");
+            for(var i=0;i<rs.rows.length;i++){
+                rowOutput+=renderToDo(rs.rows.item(i));
+            }
+            todoItems.html(rowOutput);
+        }
+
+        function renderToDo(row){
+            return "<li>"+row.todo+"</li>";
+        }
+
+        function init(){
+            todol.open();
+            todol.createTable();
+            todol.getAllToDoItems(loadTodoItems);
+        }
+
+
+        //Called When user wants to add a new To-Do
+        init();
+$("#adder").bind("tap",add);
+
+//Function Definition to Prompt to enter To-Do
+function add(){
+navigator.notification.prompt(
+    'New ToDo',                 // message
+    addToDo(input1),           // callback to invoke
+    'ToDo',                   // title
+    ['Cancel','Ok'],         // buttonLabels
+    'Enter Your ToDo here'  // defaultText
+);
+}
+});
+
+        </script>
+    </head>
+    <body>
+        <section id="home" data-role="page">
+            <header data-role="header" data-position="fixed" data-theme="b">
+                <h1>ToDoL</h1>
+            </header>
+            <article data-role="content">
+                <div>
+                    <center>
+                    <input type="button" id="adder" value="Add To-Do" data-inline="true" onclick="onPrompt();" />
+                    <input type="button" id="remover" value="Remove Tasks" data-inline="true" />
+                    </center>
+                </div>
+                <div id="maincontent">
+                <ul id="todolist" data-role="listview">
+                    
+                </ul>
+                </div>
+            </article>
+            <footer data-role="footer" data-position="fixed" data-theme="b"> 
+                <h1>&copy Reserved by Dinesh Raja</h1>
+            </footer>
+        </section>
+        <script type="text/javascript" src="cordova.js"></script>        
+    </body>
+</html>
